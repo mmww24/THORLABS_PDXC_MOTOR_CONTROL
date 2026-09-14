@@ -1,69 +1,150 @@
-# PDXC angle sweep controller
+# PDXC / PDXR1 Motor Controller
 
-This project provides a command-line controller for a Thorlabs PDXC with a
-PDXR1 rotation stage. It is intended to perform a bounded sweep between two
-absolute angles at a requested speed and number of cycles, with preflight
-diagnostics and optional position/error logging.
+![Thorlabs PDXC](https://media.thorlabs.com/contentassets/b6bed45782c34d0996cec2a7d82e0906/14581_pdxc_sgl.webp?v=1116123909)
 
-The supported Windows path uses the official Thorlabs PDXC SDK package and its
-matching bitness DLL. Install the PDXC software/SDK from Thorlabs first, then
-use the DLL path and device serial reported by the SDK. Do not load a 32-bit
-DLL from a 64-bit Python process (or vice versa).
+Unofficial Python tools for controlling a Thorlabs PDXC with a PDXR1 rotation
+stage. The project supports a Windows SDK backend and an experimental direct
+serial backend for Linux and Windows.
 
-The controller validates PDXR limits of -180..180 degrees and the documented
-PDXR speed range of 10..30 degrees/s. Execution verifies PDXR1, enabled state,
-calibration, manual trigger mode, and closed-loop mode. `--closed-loop` permits
-one explicit open-to-closed transition; `--home` permits one explicit homing
-operation followed by calibration polling. Both are opt-in because they can
-change hardware state and cause motion.
+## Features
 
-Dry-run planning is safe and does not contact or move hardware. Hardware
-execution requires an explicit execution option and a deliberate operator
-check of the selected device and targets. The SDK's disable operation is not
-documented as an emergency stop or motion abort; use the controller's normal
-stop/safety procedure if motion must be interrupted.
+- Bounded absolute-angle moves and repeated sweeps
+- Speed control in degrees per second (`deg/s`)
+- Single-leg and bidirectional operation
+- Tkinter GUI with Play, Pause, Resume, Cancel, and Home controls
+- Linux command-line interface for direct serial control
+- Dry-run mode for planning without hardware access
+- Position, status, and error-code logging to CSV
 
-Ubuntu/Linux direct control is available through the experimental
-`pdxc_serial.py` transport, which uses the FTDI serial port and the validated
-CR-terminated ASCII commands. There is no Thorlabs Linux DLL or official Linux
-SDK. The transport has been exercised on the Windows host against the real
-PDXR1, including a bounded move and a pause/resume trial; Ubuntu USB hardware
-and GUI execution have not yet been validated. Treat the raw serial layer as
-device-specific and keep the serial port, model, angle, and speed checks in
-place. `DIS=1` quiets and disables the stationary controller, but Thorlabs does
-not document it as an emergency stop; a pause must be verified from the
-position readback before relying on it.
+## Backends
 
-Keep execution logs with timestamp, target, observed position, status, and
-error code so a run can be audited. The actual command names and options are
-defined by `pdxc_controller.py`; keep this README synchronized with the final
-CLI after implementation is complete.
+| Backend | Platform | Entry point | Hardware status |
+| --- | --- | --- | --- |
+| PDXC SDK | Windows | `pdxc_controller.py` | Tested with a real PDXR1 on Windows |
+| Direct serial | Linux / Windows | `pdxc_serial.py`, `pdxc_serial_cli.py` | Windows serial path tested; Ubuntu hardware still needs validation |
+| GUI | Linux / Windows | `pdxc_gui.py` | Use `--simulate` without a connected stage |
 
-Example dry run (safe; no DLL or hardware access):
+The Linux path uses the FTDI serial port and PDXC ASCII commands. Thorlabs
+does not provide a Linux DLL or official Linux SDK for this device.
+
+## Motion parameters
+
+- Angle: absolute position in degrees (`deg`), valid PDXR range `-180..180`
+- Speed: degrees per second (`deg/s`), documented PDXR range `10..30`
+- `single`: move from the current position to the target B angle once
+- `bidirectional`: move `A -> B -> A` for each cycle
+
+## Installation
+
+Python 3.10 or newer is required.
+
+### Windows
+
+Install the PDXC software/SDK from Thorlabs, then create an environment:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e .
+```
+
+The SDK DLL and Python process must have matching bitness. Keep the DLL path,
+controller serial number, and SDK installation outside the repository.
+
+### Ubuntu / Linux
+
+```bash
+sudo apt update
+sudo apt install python3 python3-venv python3-tk
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+sudo usermod -aG dialout "$USER"
+```
+
+Log out and back in after changing the `dialout` group. The device normally
+appears as `/dev/ttyUSB0`. WSL also needs USB passthrough before a Linux process
+can access the stage.
+
+## Windows SDK command line
+
+Plan a move without contacting hardware:
 
 ```powershell
 python .\pdxc_controller.py 0 120 --speed 20 --cycles 1
 ```
 
-Hardware execution requires an explicit matching Windows DLL path, serial, and
-the opt-in closed-loop/homing flags when needed:
+An actual run requires an explicit DLL, controller serial, and `--execute`:
 
 ```powershell
-python .\pdxc_controller.py 0 120 --speed 20 --cycles 1 --tolerance 0.05 --leg-timeout 30 --timeout 3 --stage-model PDXR1 --serial <CONTROLLER_SERIAL> --closed-loop --home --execute --dll "<PDXC_SDK>\PDXC_COMMAND_LIB_win64.dll" --csv artifacts\run.csv
+python .\pdxc_controller.py 0 120 --speed 20 --cycles 1 `
+  --stage-model PDXR1 --serial <CONTROLLER_SERIAL> `
+  --dll "<PDXC_SDK>\PDXC_COMMAND_LIB_win64.dll" `
+  --closed-loop --home --enable --execute --csv artifacts\run.csv
 ```
 
-After replacing the placeholders with the local SDK path and controller serial,
-the command can be used for a deliberate hardware run. A later run starts with
-a disabled controller and therefore requires `--enable`; if calibration is
-`No!>`, add `--home` and expect homing motion before the sweep. Successful execution ends
-by disabling the controller and verifying `Get_Disabled == 1`, unless
-`--keep-enabled` is explicitly supplied. A communication failure or timeout
-prevents further commanded motion, but the SDK does not expose a documented
-emergency stop, so already commanded physical motion may continue until the
-controller's own safety behavior settles.
+Replace the placeholders only with local values. `--home`, `--closed-loop`,
+and `--enable` can change hardware state and are intentionally explicit.
 
-The implementation performs read-only preflight checks before issuing motion
-commands. It does not automatically change loop, enable, or calibration state.
+## GUI
+
+Start the simulator first:
+
+```bash
+python -m pdxc_gui --simulate
+```
+
+For a live serial session, select the port and set the A angle, B angle, speed,
+mode, and cycle count in the window:
+
+```bash
+python -m pdxc_gui --port /dev/ttyUSB0       # Linux
+python -m pdxc_gui --port COM3               # Windows serial path
+```
+
+`Play` enables the controller and starts the selected motion. `Pause` disables
+the controller so the motor should become quiet; verify the displayed position
+before using `Resume`. Completion, Cancel, disconnect, and window close disable
+the controller and close the serial port.
+
+## Linux serial CLI
+
+The default is a dry run:
+
+```bash
+python -m pdxc_serial_cli \
+  --a-angle 0 --b-angle 120 --speed-deg-s 20 \
+  --mode bidirectional --cycles 1
+```
+
+For a deliberate hardware run, add the port and execution flags only after
+checking the connected device and travel range:
+
+```bash
+python -m pdxc_serial_cli \
+  --port /dev/ttyUSB0 --a-angle 0 --b-angle 120 \
+  --speed-deg-s 20 --mode bidirectional --cycles 1 \
+  --execute --enable --csv artifacts/linux_run.csv
+```
+
+The installed console entry point is equivalent:
+
+```bash
+pdxc-serial --help
+```
+
+## Safety and validation
+
+- Dry-run commands do not contact or move hardware.
+- Confirm the device model, serial/port, calibration, loop mode, and safe travel range before `--execute`.
+- The SDK disable command and serial `DIS=1` are not documented emergency stops.
+- A communication timeout may not stop motion that has already been commanded.
+- Hardware execution must be supervised and should leave the controller disabled when finished.
+
+The Windows SDK and Windows serial paths were exercised with a real PDXR1,
+including a bounded move and pause/resume trial. Ubuntu USB passthrough and
+Ubuntu hardware execution have not been validated. Tests and the GUI simulator
+do not require a connected motor.
 
 ## Reference material
 
@@ -77,32 +158,3 @@ see [LICENSE](LICENSE). Thorlabs PDXC software, SDK libraries, manuals, device
 firmware, and trademarks remain the property of their respective owners and
 must be obtained and used under their applicable terms. They are intentionally
 not included in this repository.
-
-## GUI
-
-Install the Python serial dependency and Tkinter on Ubuntu, for example
-`sudo apt install python3-tk`, then install this project in a virtual
-environment. Start a hardware session with `python -m pdxc_gui --port
-/dev/ttyUSB0`; start the safe simulator with `python -m pdxc_gui --simulate`.
-The GUI uses `pyserial` for the cross-platform serial transport and performs
-connection queries before Play. Home is an explicit button. Play enables the
-controller, while completion, disconnect, and window close disable it and
-close the port. Pause/Resume is exposed as provisional controller-state
-control; Cancel is separate.
-
-The live serial path has been exercised on Windows with the PDXC FTDI serial
-transport. Ubuntu hardware validation remains outstanding because this WSL
-installation lacks Tkinter and USB passthrough. The GUI simulator smoke test
-and headless worker/serial tests do not contact hardware. Install
-`python3-tk`, expose the FTDI device as `/dev/ttyUSB*`, and run the simulator
-before attempting a Linux hardware session.
-
-Linux terminal CLI is also available after installation:
-
-```bash
-python -m pdxc_serial_cli --a-angle 0 --b-angle 120 --speed-deg-s 20 \
-  --mode bidirectional --cycles 1
-```
-
-This is a dry-run. Add `--port /dev/ttyUSB0 --execute --enable` only after
-checking the stage, loop, calibration, trigger mode, and safe travel range.

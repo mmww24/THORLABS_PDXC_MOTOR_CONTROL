@@ -6,6 +6,11 @@ Unofficial Python tools for controlling a Thorlabs PDXC with a PDXR1 rotation
 stage. The project supports a Windows SDK backend and an experimental direct
 serial backend for Linux and Windows.
 
+> **Windows users:** The recommended first choice is the official [Thorlabs
+> PDXC software](https://www.thorlabs.com/software-pages/PDXC). Use this
+> project when you specifically need the documented CLI, GUI, logging, or
+> Linux direct-serial workflow.
+
 ## Features
 
 - Bounded absolute-angle moves and repeated sweeps

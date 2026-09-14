@@ -65,6 +65,11 @@ controller's own safety behavior settles.
 The implementation performs read-only preflight checks before issuing motion
 commands. It does not automatically change loop, enable, or calibration state.
 
+## Reference material
+
+- [Thorlabs PDXC software page](https://www.thorlabs.com/software-pages/PDXC)
+- [Thorlabs Motion Control Examples: Python Serial Command](https://github.com/Thorlabs/Motion_Control_Examples/tree/main/Python/Serial%20Command)
+
 ## License
 
 The original source code in this repository is released under the MIT License;

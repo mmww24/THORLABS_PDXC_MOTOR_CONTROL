@@ -1,0 +1,14 @@
+[project]
+name = "thorlabs"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = ["pyserial>=3.5"]
+
+[project.scripts]
+pdxc-sweep = "pdxc_controller:main"
+pdxc-gui = "pdxc_gui:main"
+pdxc-serial = "pdxc_serial_cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

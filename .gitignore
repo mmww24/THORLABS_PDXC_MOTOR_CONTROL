@@ -1,0 +1,48 @@
+# Python environments and generated caches
+.venv/
+.venv-*/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.pytest_cache/
+pytest-cache-files-*/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+
+# IDE and local machine metadata
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Hardware logs may contain serial numbers, ports, and experiment data
+artifacts/
+*.csv
+*.log
+*.sqlite
+*.sqlite3
+
+# Machine-specific configuration and local scratch files
+config.local.*
+local/
+
+# Proprietary/vendor-installed material and local investigation notes
+tmp_pdx.txt
+note.md
+pdxc_investigation.md
+docs/validation.md
+docs/serial_protocol.md
+docs/pause_semantics.md
+docs/linux_protocol.md
+
+# Local SDK binaries/manuals must be installed separately from Thorlabs
+*.dll
+*.lib
+*.pdf

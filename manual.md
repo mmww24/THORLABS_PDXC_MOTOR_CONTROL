@@ -70,6 +70,22 @@ python .\pdxc_controller.py 0 120 --speed 20 --cycles 1
 
 ## Ubuntu Linux
 
+### 케이블 연결
+
+현재 사용하는 컴퓨터와 PDXC의 연결은 다음과 같습니다.
+
+```text
+컴퓨터 USB-A 포트  <->  PDXC 컨트롤러 USB-B 포트
+```
+
+충전 전용 케이블이 아닌 USB 데이터 케이블을 사용하십시오. PDXC와 PDXR1의
+전원 및 스테이지 연결은 장비 매뉴얼의 연결 절차에 따라 완료한 뒤 프로그램을
+실행합니다.
+
+- Windows: PDXC 프로그램 또는 장치 목록에서 컨트롤러와 COM 포트를 확인합니다.
+- Linux: 보통 `/dev/ttyUSB0`과 같은 장치 파일로 나타납니다.
+- 실행 전 선택한 포트와 컨트롤러 serial을 다시 확인합니다.
+
 Thorlabs의 공식 Linux DLL은 제공되지 않습니다. Linux 경로는 프로젝트의 `pdxc_serial.py`가 FTDI USB-시리얼 포트에 직접 연결하는 방식입니다. 이 raw serial 경로는 Windows 호스트의 실제 PDXR1에서 읽기, 이동, pause/resume까지 검증했지만 Ubuntu의 실제 USB passthrough는 아직 검증하지 않았습니다.
 
 ### 1. 패키지와 권한

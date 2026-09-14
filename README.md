@@ -38,6 +38,22 @@ does not provide a Linux DLL or official Linux SDK for this device.
 
 Python 3.10 or newer is required.
 
+## Hardware connection
+
+The tested computer-to-controller connection is:
+
+```text
+Computer USB-A port  <->  USB-B port on the PDXC controller
+```
+
+Use a USB data cable, not a charge-only cable. Connect and power the PDXC and
+PDXR1 stage according to the device documentation before starting the
+software. After connecting the USB cable:
+
+- Windows should expose the controller through the PDXC software and its COM/SDK device list.
+- Linux should expose the FTDI interface as a device such as `/dev/ttyUSB0`.
+- Confirm the selected port and controller serial before enabling hardware execution.
+
 ### Windows
 
 Install the PDXC software/SDK from Thorlabs, then create an environment:

@@ -1,7 +1,7 @@
 # Public repository scope
 
 The intended public repository contains the portable source, tests, GUI, README,
-and `manual.md`. It does not contain vendor SDK binaries, extracted vendor
+and `manual_ko.md` / `manual_en.md`. It does not contain vendor SDK binaries, extracted vendor
 manual text, device logs, or local machine metadata.
 
 Keep these files private or excluded by `.gitignore`:
